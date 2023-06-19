@@ -2,8 +2,14 @@ package com.example.count_down_timer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
+import androidx.annotation.MainThread
+import androidx.appcompat.app.AlertDialog
 import com.example.count_down_timer.databinding.ActivityMainBinding
 import java.util.*
+import kotlin.concurrent.timerTask
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +29,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnPause.setOnClickListener{startStopAction()}
         binding.btnReset.setOnClickListener{resetAction()}
+        binding.btnShowDialog.setOnClickListener{showEditTextDialog()}
 
         if(dataHelper.timerCounting())
         {
@@ -32,6 +39,9 @@ class MainActivity : AppCompatActivity() {
             stopTimer()
             if(dataHelper.startTime() != null && dataHelper.stopTime() != null)
             {
+                showEditTextDialog() // Cada vez que se entre a la app y se mire si
+                // está el timer ejecutándose, si está parado es que ha terminado y necesita
+                // introducir un valor para la alarma
                 val time = Date().time - calcRestartTime().time
                 binding.tvTime.text = timeStringFromLong(time)
             }
@@ -39,8 +49,8 @@ class MainActivity : AppCompatActivity() {
 
         // Cada cuanto tiempo se comprobará el timer ? -> 500 milisegundos
         timer.scheduleAtFixedRate(timeTask(), 0, 500)
+        timer.scheduleAtFixedRate(checkAlarm(), 0,500)
     }
-
 
     private inner class timeTask: TimerTask()
     {
@@ -54,6 +64,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private inner class checkAlarm: TimerTask(){
+
+        override fun run() {
+            if (binding.tvAlarma.text.toString() == binding.tvTime.text.toString()) {
+                dataHelper.setTimerCounting(false)
+            }
+        }
+    }
+
+    private fun showEditTextDialog()
+    {
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogLayout = inflater.inflate(R.layout.alertdialog, null)
+        val editText_Dialog_Horas = dialogLayout.findViewById<EditText>(R.id.etHoras)
+        val editText_Dialog_Minutos = dialogLayout.findViewById<EditText>(R.id.etMinutes)
+        val editText_Dialog_Segundos = dialogLayout.findViewById<EditText>(R.id.etSeconds)
+
+        with(alertDialogBuilder){
+            setTitle("¿Cuándo quieres que suene la alarma?")
+
+            setPositiveButton("DONE"){ dialog, which ->
+
+                // Chequear cuando sean menores de 10 poner 09
+                if(editText_Dialog_Segundos.text.toString().toInt() < 10){
+                    editText_Dialog_Segundos.setText("0${editText_Dialog_Segundos.text}")
+                }
+                if(editText_Dialog_Minutos.text.toString().toInt() < 10){
+                    editText_Dialog_Minutos.setText("0${editText_Dialog_Minutos.text}")
+                }
+                if(editText_Dialog_Horas.text.toString().toInt() < 10){
+                    editText_Dialog_Horas.setText("0${editText_Dialog_Horas.text}")
+                }
+                binding.tvAlarma.setText("${editText_Dialog_Horas.text}:${editText_Dialog_Minutos.text}:${editText_Dialog_Segundos.text}")
+            }
+
+            setNegativeButton("CANCEL"){ dialog, which->  }
+
+            setView(dialogLayout)
+            show()
+        }
+    }
 
     private fun startStopAction()
     {
@@ -112,11 +164,12 @@ class MainActivity : AppCompatActivity() {
         val seconds = (miliSeconds / 1000) % 60
         val minutes = (miliSeconds / (1000 * 60) % 60)
         val hours = (miliSeconds / (1000 * 60 *60) % 24)
+
         return makeTimeString(hours, minutes, seconds)
     }
 
-    private fun makeTimeString(hours: Long, minutes: Long, seconds: Long): String
-    {
+    private fun makeTimeString(hours: Long, minutes: Long, seconds: Long): String {
+
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 }

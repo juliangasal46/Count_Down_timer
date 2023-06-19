@@ -9,6 +9,17 @@
     android:gravity="center"
     tools:context=".MainActivity">
 
+
+    <TextView
+        android:id="@+id/tvAlarma"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="00:00:00"
+        android:padding="10dp"
+        android:textAlignment="center"
+        android:textSize="60sp"
+        android:layout_marginBottom="100dp"/>
+
         <TextView
             android:id="@+id/tvTime"
             android:layout_width="match_parent"
@@ -38,5 +49,10 @@
                 android:text="Reset"/>
                 <!--- android:background="@drawable/restart_vector"/> -->
 
+            <Button
+                android:id="@+id/btnShowDialog"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:text="Show Dialog"/>
         </LinearLayout>
 </LinearLayout>
