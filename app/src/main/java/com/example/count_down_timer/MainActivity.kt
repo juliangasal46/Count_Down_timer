@@ -2,166 +2,121 @@ package com.example.count_down_timer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.example.count_down_timer.databinding.ActivityMainBinding
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var btnPlay: Button
-    private lateinit var btnPause: Button
-    private lateinit var btnReset: Button
-    private lateinit var tvTimer_Horas: TextView
-    private lateinit var tvTimer_Minutos: TextView
-    private lateinit var tvTimer_Segundos: TextView
-    private var horas: Int = 0
-    private var minutos: Int = 0
-    private var segundos: Int = 0
-    private var coroutineRunning: Boolean = false
+    // Binding = Usado para interactuar mejor con la UI, sin necesidad de poner findViewById(...)
+    // si no que los podemos usar por referencias directas a los elementos
+    lateinit var binding: ActivityMainBinding
+    lateinit var dataHelper: DataHelper
+
+    private val timer = Timer()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        btnPlay = findViewById(R.id.btnContinue)
-        btnPause = findViewById(R.id.btnPause)
-        btnReset = findViewById(R.id.btnReset)
-        tvTimer_Horas = findViewById(R.id.tvTimerHoras)
-        tvTimer_Minutos = findViewById(R.id.tvTimerMinutos)
-        tvTimer_Segundos = findViewById(R.id.tvTimerSegundos)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        dataHelper = DataHelper(applicationContext)
 
-        showInputDialog()
+        binding.btnPause.setOnClickListener{startStopAction()}
+        binding.btnReset.setOnClickListener{resetAction()}
 
-        btnPlay.setOnClickListener{
-            coroutineRunning = true
-
-            val empiezaTimer = GlobalScope.launch {
-                restarTiempo()
+        if(dataHelper.timerCounting())
+        {
+            startTimer()
+        } else
+        {
+            stopTimer()
+            if(dataHelper.startTime() != null && dataHelper.stopTime() != null)
+            {
+                val time = Date().time - calcRestartTime().time
+                binding.tvTime.text = timeStringFromLong(time)
             }
         }
 
-        btnPause.setOnClickListener{
-            coroutineRunning = false
-        }
-
-        btnReset.setOnClickListener{
-
-
-
-        }
-
+        // Cada cuanto tiempo se comprobará el timer ? -> 500 milisegundos
+        timer.scheduleAtFixedRate(timeTask(), 0, 500)
     }
 
-    private fun showInputDialog()  {
 
-        val alertDialog = AlertDialog.Builder(this@MainActivity)
-        val view = layoutInflater.inflate(R.layout.alertdialog, null)
-
-        // Pasamos la vista al builder para que construya
-        alertDialog.setView(view)
-
-        val dialog = alertDialog.create()
-
-        dialog.show()
-
-        // Los componentes están guardados en nuestro view que le metemos -> Coger datos de boxes
-        val horasCajas = view.findViewById<EditText>(R.id.etHoras)
-        val minutosCajas = view.findViewById<EditText>(R.id.etMinutes)
-        val segundosCajas = view.findViewById<EditText>(R.id.etSeconds)
-
-        view.findViewById<Button>(R.id.btnAccept).setOnClickListener{
-
-            if(horasCajas.text.isNotEmpty()
-                && minutosCajas.text.isNotEmpty()
-                && segundosCajas.text.isNotEmpty()){
-
-                horas = Integer.parseInt((horasCajas.text).toString())
-                minutos = Integer.parseInt((minutosCajas.text).toString())
-                segundos = Integer.parseInt((segundosCajas.text).toString())
-
-                tvTimer_Horas.text = (horas).toString()
-                tvTimer_Minutos.text = (minutos).toString()
-                tvTimer_Segundos.text = (segundos).toString()
-
-                dialog.dismiss() // Que se cierre
-
-            } else {
-                Toast.makeText(this, "Revisa los datos, hay algo mal", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        view.findViewById<Button>(R.id.btnCancel).setOnClickListener{
-            dialog.dismiss() // Que se cierre
-        }
-    }
-
-    private suspend fun restarTiempo() {
-
-        lifecycleScope.launch(Dispatchers.Default) {
-            while (coroutineRunning) {
-
-                runOnUiThread {
-                    if (segundos > 0) {
-                        segundos -= 1
-                        tvTimer_Segundos.text = (segundos).toString()
-                    } else {
-
-                        if (minutos == 0 && horas == 0) {
-                            Toast.makeText(this@MainActivity, "RING RING", Toast.LENGTH_SHORT)
-                                .show()
-                        } else {
-                            tvTimer_Segundos.text = "60"
-                            segundos = 60
-
-                            // Mirar si las horas tienen algo y si los minutos también
-                            if (minutos > 0) {
-                                minutos -= 1
-                                tvTimer_Minutos.text = (minutos).toString()
-                            } else {
-                                tvTimer_Minutos.text = "59"
-                                minutos = 59
-
-                                if (horas > 0) {
-                                    horas -= 1
-                                    tvTimer_Horas.text = (horas).toString()
-                                } else {
-                                    if (horas == 0 && minutos == 0 && segundos == 0) {
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            "RING RING",
-                                            Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                        }
-                    }
-                }
-                delay(1000)
+    private inner class timeTask: TimerTask()
+    {
+        override fun run()
+        {
+            if(dataHelper.timerCounting())
+            {
+                val time = Date().time - dataHelper.startTime()!!.time
+                binding.tvTime.text = timeStringFromLong(time)
             }
         }
     }
 
 
-    suspend fun restaurarValores(){
-        horas = 0
-        minutos = 0
-        segundos = 0
-
-        tvTimer_Horas.text = "00"
-        tvTimer_Minutos.text = "00"
-        tvTimer_Segundos.text = "00"
-
-        delay(2000)
+    private fun startStopAction()
+    {
+        if(dataHelper.timerCounting())
+        {
+            dataHelper.setStopTime(Date())
+            stopTimer()
+        } else
+        {
+            if(dataHelper.stopTime() != null)
+            {
+                dataHelper.setStartTime(calcRestartTime())
+                dataHelper.setStopTime(null)
+            } else
+            {
+                dataHelper.setStartTime(Date()) // A new Date
+            }
+            startTimer()
+        }
     }
 
 
+    private fun calcRestartTime(): Date
+    {
+        val diff = dataHelper.startTime()!!.time - dataHelper.stopTime()!!.time
+        return Date(System.currentTimeMillis() + diff)
+    }
 
+
+    private fun resetAction()
+    {
+        dataHelper.setStopTime(null)
+        dataHelper.setStartTime(null)
+        stopTimer()
+        binding.tvTime.text = timeStringFromLong(0) // Format the time
+    }
+
+
+    private fun startTimer()
+    {
+        dataHelper.setTimerCounting(true)
+        // binding.btnPause.background = (R.drawable.pause_vector).toDrawable()
+        binding.btnPause.text = "PAUSE"
+    }
+
+
+    private fun stopTimer()
+    {
+        dataHelper.setTimerCounting(false)
+        binding.btnPause.text = "PLAY"
+    }
+
+    private fun timeStringFromLong(miliSeconds: Long ): String
+    {
+        // We will have to make a conversion to get the time correct
+        val seconds = (miliSeconds / 1000) % 60
+        val minutes = (miliSeconds / (1000 * 60) % 60)
+        val hours = (miliSeconds / (1000 * 60 *60) % 24)
+        return makeTimeString(hours, minutes, seconds)
+    }
+
+    private fun makeTimeString(hours: Long, minutes: Long, seconds: Long): String
+    {
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
 }
