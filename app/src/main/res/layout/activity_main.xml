@@ -55,4 +55,12 @@
                 android:layout_height="100dp"
                 android:text="Show Dialog"/>
         </LinearLayout>
+
+    <Button
+        android:id="@+id/btnActuarAlarma"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/green"
+        android:text="Start ringing alarm"/>
 </LinearLayout>

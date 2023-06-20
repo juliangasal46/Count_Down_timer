@@ -1,7 +1,9 @@
 package com.example.count_down_timer
 
+import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore.Audio.Media
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -15,8 +17,9 @@ class MainActivity : AppCompatActivity() {
 
     // Binding = Usado para interactuar mejor con la UI, sin necesidad de poner findViewById(...)
     // si no que los podemos usar por referencias directas a los elementos
-    lateinit var binding: ActivityMainBinding
-    lateinit var dataHelper: DataHelper
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var dataHelper: DataHelper
+    private lateinit var mp: MediaPlayer
 
     private val timer = Timer()
 
@@ -30,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnPause.setOnClickListener{startStopAction()}
         binding.btnReset.setOnClickListener{resetAction()}
         binding.btnShowDialog.setOnClickListener{showEditTextDialog()}
+        binding.btnActuarAlarma.setOnClickListener{chequearAlarma()}
+
+        mp = MediaPlayer.create(applicationContext, R.raw.alarma_sonido) // Mirar cada cuanto tiempo suena ...
 
         if(dataHelper.timerCounting())
         {
@@ -65,11 +71,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private inner class checkAlarm: TimerTask(){
-
         override fun run() {
-            if (binding.tvAlarma.text.toString() == binding.tvTime.text.toString()) {
+            if ((binding.tvAlarma.text.toString() == binding.tvTime.text.toString())
+                && binding.tvTime.text != "00:00:00") {
+                // Mirar que sean iguales para parar el timer pero que no sean iguales a 0
                 dataHelper.setTimerCounting(false)
+                mp.start()
             }
+        }
+    }
+
+    private fun chequearAlarma(){
+
+        if (mp.isPlaying()) {
+            mp.stop()
+            mp.prepare() // Cuando stop hay que preparar parar start()
+            binding.btnActuarAlarma.text = "Start Alarm"
+        } else{
+            mp.start()
+            binding.btnActuarAlarma.text = "Stop Alarm"
         }
     }
 
