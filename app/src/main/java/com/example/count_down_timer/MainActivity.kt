@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
+import androidx.core.text.isDigitsOnly
 import com.example.count_down_timer.databinding.ActivityMainBinding
 import java.util.*
 import kotlin.concurrent.timerTask
@@ -108,17 +109,28 @@ class MainActivity : AppCompatActivity() {
             setPositiveButton("DONE"){ dialog, which ->
 
                 // Chequear cuando sean menores de 10 poner 09
-                if(editText_Dialog_Segundos.text.toString().toInt() < 10){
-                    editText_Dialog_Segundos.setText("0${editText_Dialog_Segundos.text}")
+                // El none devuelve true si ningún caracter coincide con lo que ponemos en la condición
+                if(!(editText_Dialog_Segundos.toString().all{it.isLetter()})
+                    || !(editText_Dialog_Minutos.toString().all{it.isLetter()})
+                    || !(editText_Dialog_Horas.toString().all{it.isLetter()}))
+                    {
+                        if(editText_Dialog_Segundos.text.toString().toInt() < 10
+                            && !(editText_Dialog_Segundos.text.toString()[0] == '0')){
+                            editText_Dialog_Segundos.setText("0${editText_Dialog_Segundos.text}")
+                        }
+                        if(editText_Dialog_Minutos.text.toString().toInt() < 10
+                            && !(editText_Dialog_Minutos.text.toString()[0]  == '0')){
+                            editText_Dialog_Minutos.setText("0${editText_Dialog_Minutos.text}")
+                        }
+                        if(editText_Dialog_Horas.text.toString().toInt() < 10
+                            && !(editText_Dialog_Horas.text.toString()[0]  == '0')){
+                            editText_Dialog_Horas.setText("0${editText_Dialog_Horas.text}")
+                        }
+                        binding.tvAlarma.setText("${editText_Dialog_Horas.text}:${editText_Dialog_Minutos.text}:${editText_Dialog_Segundos.text}")
+                } else{
+                    Toast.makeText(context, "Lo siento, no se pueden introducir letras ...", Toast.LENGTH_SHORT).show()
                 }
-                if(editText_Dialog_Minutos.text.toString().toInt() < 10){
-                    editText_Dialog_Minutos.setText("0${editText_Dialog_Minutos.text}")
                 }
-                if(editText_Dialog_Horas.text.toString().toInt() < 10){
-                    editText_Dialog_Horas.setText("0${editText_Dialog_Horas.text}")
-                }
-                binding.tvAlarma.setText("${editText_Dialog_Horas.text}:${editText_Dialog_Minutos.text}:${editText_Dialog_Segundos.text}")
-            }
 
             setNegativeButton("CANCEL"){ dialog, which->  }
 
