@@ -76,14 +76,15 @@ class MainActivity : AppCompatActivity() {
             if ((binding.tvAlarma.text.toString() == binding.tvTime.text.toString())
                 && binding.tvTime.text != "00:00:00") {
                 // Mirar que sean iguales para parar el timer pero que no sean iguales a 0
-                dataHelper.setTimerCounting(false)
-                mp.start()
+                    // dataHelper.setTimerCounting(false) // Esto me falla
+                    mp.start()
+                    binding.btnActuarAlarma.text = "Stop Alarm"
+
+                }
             }
         }
-    }
 
     private fun chequearAlarma(){
-
         if (mp.isPlaying()) {
             mp.stop()
             mp.prepare() // Cuando stop hay que preparar parar start()
@@ -109,10 +110,11 @@ class MainActivity : AppCompatActivity() {
             setPositiveButton("DONE"){ dialog, which ->
 
                 // Chequear cuando sean menores de 10 poner 09
-                // El none devuelve true si ningún caracter coincide con lo que ponemos en la condición
-                if(!(editText_Dialog_Segundos.toString().all{it.isLetter()})
-                    || !(editText_Dialog_Minutos.toString().all{it.isLetter()})
-                    || !(editText_Dialog_Horas.toString().all{it.isLetter()}))
+
+                // Parece que chequea el tipo, es un charsquence pero queremos un int
+                if(editText_Dialog_Segundos.text.toString().all{it.isDigit()}
+                    || editText_Dialog_Minutos.text.toString().all{it.isDigit()}
+                    || editText_Dialog_Horas.text.toString().all{it.isDigit()})
                     {
                         if(editText_Dialog_Segundos.text.toString().toInt() < 10
                             && !(editText_Dialog_Segundos.text.toString()[0] == '0')){
@@ -130,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                 } else{
                     Toast.makeText(context, "Lo siento, no se pueden introducir letras ...", Toast.LENGTH_SHORT).show()
                 }
-                }
+            }
 
             setNegativeButton("CANCEL"){ dialog, which->  }
 
