@@ -79,7 +79,6 @@ class MainActivity : AppCompatActivity() {
                     // dataHelper.setTimerCounting(false) // Esto me falla
                     mp.start()
                     binding.btnActuarAlarma.text = "Stop Alarm"
-
                 }
             }
         }
@@ -89,6 +88,7 @@ class MainActivity : AppCompatActivity() {
             mp.stop()
             mp.prepare() // Cuando stop hay que preparar parar start()
             binding.btnActuarAlarma.text = "Start Alarm"
+            stopTimer()
         } else{
             mp.start()
             binding.btnActuarAlarma.text = "Stop Alarm"
